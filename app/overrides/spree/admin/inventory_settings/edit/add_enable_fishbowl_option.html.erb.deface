@@ -1,0 +1,6 @@
+<!-- insert_after '[data-hook="allow_backorders"]' -->
+  <div data-hook="enable_fishbowl"  class="field">
+    <%= hidden_field_tag 'preferences[enable_fishbowl]', '0' %>
+    <%= check_box_tag('preferences[enable_fishbowl]', "1", Spree::Config[:enable_fishbowl]) %>
+    <%= t(:enable_fishbowl_integration) %>
+  </div>

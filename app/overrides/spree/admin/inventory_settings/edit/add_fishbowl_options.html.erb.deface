@@ -1,4 +1,5 @@
 <!-- insert_before '[data-hook="buttons"]' -->
+<% if Spree::Config[:enable_fishbowl] %>
 <div class="row">
   <div class="twelve columns" id="fishbowl_preferences">
     <fieldset class="no-border-bottom">
@@ -22,3 +23,4 @@
 <script type="text/javascript">
   $('.select2').select2();
 </script>
+<% end %>
