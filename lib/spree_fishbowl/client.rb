@@ -26,7 +26,8 @@ module SpreeFishbowl
 
     def self.available_inventory(varient)
       location_group = Spree::Config[:fishbowl_location_group]
-      return 1.0 / 0.0 if location_group.nil? || location_group.empty?
+      return nil if location_group.nil? || location_group.empty? ||
+        varient.sku.nil? || varient.sku.empty?
 
       execute_request(:get_total_inventory, {
         :part_number => varient.sku,
