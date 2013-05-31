@@ -39,15 +39,16 @@ module SpreeFishbowl
       execute_request(:save_sales_order, :issue => issue, :sales_order => sales_order)
     end
 
-    def self.execute_request(request_name, params = nil)
+    def self.execute_request(request_name, params = {})
       fishbowl = connection
       return nil if fishbowl.nil?
 
       begin
         result = fishbowl.send(request_name, params)
-      rescue ::Fishbowl::Errors::StatusError
+      rescue ::Fishbowl::Errors::StatusError => e
         Rails.logger.debug fishbowl.last_request
         Rails.logger.debug fishbowl.last_response
+        raise e
       ensure
         fishbowl.close
       end
