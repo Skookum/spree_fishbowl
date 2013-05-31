@@ -10,7 +10,7 @@ module SpreeFishbowl
       password = Spree::Config[:fishbowl_password]
 
       if hostname && !hostname.empty? && password && !password.empty?
-        return ::Fishbowl::Connection.new(:host => hostname).connect.login(user, password)
+        return Fishbowl::Connection.new(:host => hostname).connect.login(user, password)
       end
 
       nil
