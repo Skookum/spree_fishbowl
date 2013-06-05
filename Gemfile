@@ -6,6 +6,5 @@ gem 'spree_auth_devise', :github => 'spree/spree_auth_devise', :branch => '1-3-s
 # has problems with libxml 2.9
 gem 'deface', :github => 'mrbanzai/deface'
 gem 'nokogiri', '>= 1.6.0.rc1'
-gem 'fishbowl', :github => 'mrbanzai/fishbowl'
 
 gemspec
