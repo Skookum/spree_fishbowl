@@ -35,6 +35,7 @@ module SpreeFishbowl
         :salesman => 'admin',
         :salesman_initials => 'ADM',
         #:register_id => nil,
+        :number => so_number(order),
         :customer_po => order.number,
         :vendor_po => nil,
         :status => status(order),
@@ -54,6 +55,10 @@ module SpreeFishbowl
         :priority_id => PRIORITY[:normal],
         :memos => []
       }
+    end
+
+    def self.so_number(order)
+      Spree::Config[:fishbowl_store_abbreviation] + 4000000 + order.id
     end
 
     def self.totals(order)
