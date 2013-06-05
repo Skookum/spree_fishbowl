@@ -1,5 +1,3 @@
-require 'pry'
-
 namespace :spree_fishbowl do
   desc "Create a sales order in Fishbowl for the specified Spree order"
   task :issue_sales_order, [:order_id] => [:environment] do |t, args|
