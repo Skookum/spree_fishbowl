@@ -1,5 +1,4 @@
 require 'fishbowl'
-require 'pry'
 
 module SpreeFishbowl
 
@@ -35,24 +34,23 @@ module SpreeFishbowl
         :note => order.special_instructions,
         :salesman => 'admin',
         :salesman_initials => 'ADM',
-        :register_id => nil,
-        :number => order.number,
-        :customer_po => nil,
+        #:register_id => nil,
+        :customer_po => order.number,
         :vendor_po => nil,
         :status => status(order),
         :location_group => Spree::Config[:fishbowl_location_group],
-        :issue => true,
+        #:issue => true,
         :note => nil,
-        :created_date => order.created_at,
-        :issued_date => nil,
-        :fob => nil,
-        :quickbooks_class_name => nil,
+        :created_date => DateTime.parse(order.created_at.to_s),
+        #:issued_date => nil,
+        #:fob => nil,
+        #:quickbooks_class_name => nil,
         :type_id => type(order),
-        :url => nil,
-        :cost => nil,
-        :date_completed => nil,
-        :date_last_modified => nil,
-        :date_revision => nil,
+        #:url => nil,
+        #:cost => nil,
+        #:date_completed => nil,
+        #:date_last_modified => nil,
+        #:date_revision => nil,
         :priority_id => PRIORITY[:normal],
         :memos => []
       }
@@ -67,13 +65,16 @@ module SpreeFishbowl
     end
 
     def self.line_items(order)
-      order.line_items.map do |item|
+      (order.line_items.map do |item|
         SalesOrderItemAdapter.adapt(item)
-      end
+      end << shipping_line_item(order.ship_total))
+        .each_with_index do |so_item, idx|
+          so_item.line_number = idx + 1
+        end
     end
 
     def self.status(order)
-      nil
+      STATUS[:issued]
     end
 
     def self.type(order)
@@ -82,8 +83,8 @@ module SpreeFishbowl
 
     def self.customer(order)
       {
-        :customer_contact => nil,
-        :customer_name => nil,
+        :customer_contact => order.name,
+        :customer_name => order.name,
         :customer_id => nil
       }
     end
@@ -96,24 +97,50 @@ module SpreeFishbowl
       }
     end
 
+    def self.payment_terms(order)
+      'COD'
+    end
+
     def self.billing(order)
       {
         :bill_to => bill_to(order),
         :payment_total => order.payment_total,
-        :payment_terms => nil
+        :payment_terms => payment_terms(order)
       }
+    end
+
+    def self.carrier(order)
+      order.shipping_method.name
+    end
+
+    def self.shipping_terms(order)
+      'Prepaid & Billed'
     end
 
     def self.shipping(order)
       {
         :ship => ship_to(order),
         :residential => false,
-        :carrier => nil,
-        :shipping_cost => order.ship_total,
-        :shipping_terms => nil,
+        :carrier => carrier(order),
+        :shipping_terms => shipping_terms(order),
         :first_ship_date => nil,
         :ups_service_id => nil
       }
+    end
+
+    def self.shipping_line_item(amount)
+      Fishbowl::Objects::SalesOrderItem.from_hash({
+        :product_number => 'Shipping',
+        :description => 'Shipping',
+        :quantity => 1,
+        :uom_code => 'ea',
+        :product_price => amount,
+        :total_price => amount,
+        :item_type => SalesOrderItemAdapter::TYPE[:shipping],
+        :status => SalesOrderItemAdapter::STATUS[:entered],
+        :new_item => false,
+        :taxable => true
+      })
     end
 
     def self.address(address)
@@ -130,34 +157,27 @@ module SpreeFishbowl
     end
 
     def self.bill_to(order)
-      bill_to_addr = Fishbowl::Objects::BillTo.new
-      address(order.billing_address).each do |k, v|
-        bill_to_addr.send("#{k}=", v)
-      end
-
-      bill_to_addr
+      Fishbowl::Objects::BillTo.from_hash(
+        address(order.billing_address)
+      )
     end
 
     def self.ship_to(order)
-      ship_to_addr = Fishbowl::Objects::Ship.new
-      address(order.shipping_address).each do |k, v|
-        ship_to_addr.send("#{k}=", v)
-      end
-
-      ship_to_addr
+      Fishbowl::Objects::Ship.from_hash(
+        address(order.shipping_address)
+      )
     end
 
     def self.adapt(order)
-      sales_order = Fishbowl::Objects::SalesOrder.new
-
-      properties = base_order(order).merge(:items => line_items(order))
-      [:base_order, :customer, :billing, :shipping, :taxes, :totals].each do |p|
-        properties.merge!(send(p, order))
-      end
-
-      properties.each { |k, v| sales_order.send("#{k}=", v) }
-
-      sales_order
+      Fishbowl::Objects::SalesOrder.from_hash(
+        base_order(order)
+          .merge(customer(order))
+          .merge(billing(order))
+          .merge(shipping(order))
+          .merge(taxes(order))
+          .merge(totals(order))
+          .merge({ :items => line_items(order) })
+      )
     end
 
   end

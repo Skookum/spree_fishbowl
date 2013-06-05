@@ -1,0 +1,6 @@
+<!-- insert_bottom "#order_tab_summary dl.additional-info" -->
+
+  <dt>Fishbowl ID</dt>
+  <dd><%= @order.fishbowl_id %></dd>
+  <dt>SO Number</dt>
+  <dd><%= @order.so_number %></dd>

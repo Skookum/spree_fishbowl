@@ -38,11 +38,11 @@ module SpreeFishbowl
     def self.base_item(item)
       {
         :product_number => item.variant.sku,
-        :description => item.variant.product.description,
+        :description => item.variant.product.name,
         :quantity => item.quantity,
         :product_price => item.price,
         :total_price => item.amount,
-        :uom_code => nil,
+        :uom_code => 'ea',
         :item_type => item_type(item),
         :status => status(item),
         #:quickbooks_class_name => nil,
@@ -51,7 +51,7 @@ module SpreeFishbowl
         #:kit_item => false,
         #:adjustment_amount => nil,
         #:adjustment_percentage => nil,
-        :customer_part_num => nil,
+        #:customer_part_num => nil,
         #:date_last_fulfillment => nil,
         #:date_last_modified => nil,
         #:date_scheduled_fulfillment => nil,
@@ -61,11 +61,11 @@ module SpreeFishbowl
         #:qty_picked => nil,
         #:revision_level => nil,
         #:total_cost => nil,
-        # apparently all items are sent as not-taxable, as Fishbowl
-        # doesn't manage the taxes
         #:tax_id => nil,
         #:tax_rate => nil,
-        #:taxable => false
+        # Defaulting to taxable, as items aren't simply marked as
+        # simply "taxable" / "non-taxable" in Spree
+        :taxable => true
       }
     end
 
@@ -78,12 +78,9 @@ module SpreeFishbowl
     end
 
     def self.adapt(item)
-      sales_order_item = Fishbowl::Objects::SalesOrderItem.new
-
-      properties = base_item(item)
-      properties.each { |k, v| sales_order_item.send("#{k}=", v) }
-
-      sales_order_item
+      Fishbowl::Objects::SalesOrderItem.from_hash(
+        base_item(item)
+      )
     end
 
   end

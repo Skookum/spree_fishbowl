@@ -10,10 +10,23 @@ module SpreeFishbowl
       password = Spree::Config[:fishbowl_password]
 
       if hostname && !hostname.empty? && password && !password.empty?
-        return Fishbowl::Connection.new(:host => hostname).connect.login(user, password)
+        begin
+          return Fishbowl::Connection.new(:host => hostname).connect.login(user, password)
+        rescue
+          # connection error; log?
+        end
       end
 
       nil
+    end
+
+    def self.customer(name)
+      begin
+        execute_request(:get_customer, :name => name)
+      rescue Fishbowl::Errors::StatusError => e
+        raise e if !e.message.match 'not found'
+        nil
+      end
     end
 
     def self.location_groups
@@ -35,21 +48,51 @@ module SpreeFishbowl
       })
     end
 
-    def self.create_sales_order(sales_order, issue = true)
-      execute_request(:save_sales_order, :issue => issue, :sales_order => sales_order)
+    def self.create_customer(order)
+      customer_obj = CustomerAdapter.adapt(order)
+      execute_request(:save_customer, { :customer => customer_obj }, order.id)
     end
 
-    def self.execute_request(request_name, params = {})
+    def self.create_sales_order(order, issue = true)
+      sales_order = SalesOrderAdapter.adapt(order)
+      if !sales_order.customer_name.nil?
+        customer_obj = customer(sales_order.customer_name)
+        create_customer(order) if !customer_obj
+      end
+      execute_request(:save_sales_order, { :issue => issue, :sales_order => sales_order}, order.id)
+    end
+
+    def self.get_order_shipments(order)
+      ship_results = execute_request(:get_ship_list, {
+        :order_number => order.so_number,
+        :record_count => 50
+      })
+      ship_results.reject { |r| r.order_number != order.so_number }.
+        select { |r| r.status == 'Shipped' }.
+        map do |ship_result|
+          execute_request(:get_shipment, { :shipment_id => ship_result.ship_id }, order.id)
+        end if !ship_results.nil?
+    end
+
+    def self.execute_request(request_name, params = {}, order_id = nil)
       fishbowl = connection
       return nil if fishbowl.nil?
 
       begin
         result = fishbowl.send(request_name, params)
-      rescue ::Fishbowl::Errors::StatusError => e
-        Rails.logger.debug fishbowl.last_request
-        Rails.logger.debug fishbowl.last_response
+      rescue Fishbowl::Errors::StatusError => e
         raise e
       ensure
+        last_request = fishbowl.last_request
+        last_response = fishbowl.last_response
+
+        Spree::FishbowlLog.new do |l|
+          l.request_xml = last_request.to_xml
+          l.response_xml = last_response.to_xml
+          l.order_id = order_id
+          l.message = e.message unless !defined?(e) || e.nil?
+        end.save! unless order_id.nil?
+
         fishbowl.close
       end
 

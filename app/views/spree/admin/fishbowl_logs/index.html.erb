@@ -1,0 +1,9 @@
+<%= render :partial => 'header' %>
+<%= render :partial => 'filter' %>
+<% if @logs.present? %>
+  <div class="alpha omega sixteen columns">
+    <%= render :partial => 'listing' %>
+  </div>
+<% else %>
+    <div class="alpha omega sixteen columns no-objects-found"><%= t(:no_results) %>.</div>
+<% end %>

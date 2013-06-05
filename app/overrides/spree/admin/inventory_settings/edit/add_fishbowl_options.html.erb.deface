@@ -6,7 +6,7 @@
       <legend align="center"><%= t(:fishbowl_settings)%></legend>
       <% @fishbowl_options.each do |key| %>
           <div class="field">
-            <%= label_tag(key, t(key) + ': ') + tag(:br) %>
+            <%= label_tag(key, t(key.to_s.gsub('fishbowl_', '').to_sym) + ': ') + tag(:br) %>
             <%= text_field_tag('preferences[' + key.to_s + ']', Spree::Config[key], { :size => 10, :class => 'fullwidth' }) %>
           </div>
       <% end %>

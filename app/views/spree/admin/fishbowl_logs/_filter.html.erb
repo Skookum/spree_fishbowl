@@ -1,0 +1,37 @@
+<% content_for :table_filter_title do %>
+  <%= t(:filter_results) %>
+<% end %>
+<% content_for :table_filter do %>
+  <%= search_form_for [:admin, @search] do |f| %>
+    <div class="field-block alpha sixteen columns">
+      <div class="alpha four columns">
+        <%= label_tag nil, t(:order_id) %>
+        <div class="field">
+          <%= f.text_field :order_id_eq %>
+        </div>
+      </div>
+      <div class="omega twelve columns">
+        <div class="date-range-filter field">
+          <%= label_tag nil, t(:date_range) %>
+          <div class="date-range-fields">
+            <%= f.text_field :created_at_gt, :class => 'datepicker datepicker-from', :value => params[:q][:created_at_gt], :placeholder => t(:start) %>
+
+            <span class="range-divider">
+              <i class="icon-arrow-right"></i>
+            </span>
+
+            <%= f.text_field :created_at_lt, :class => 'datepicker datepicker-to', :value => params[:q][:created_at_lt], :placeholder => t(:stop) %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <div class="actions filter-actions">
+      <div data-hook="admin_fishbowl_logs_filter">
+        <%= button t(:filter_results), 'icon-search' %>
+      </div>
+    </div>
+  <% end %>
+<% end %>

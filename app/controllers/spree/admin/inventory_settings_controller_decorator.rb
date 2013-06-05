@@ -7,7 +7,8 @@ Spree::Admin::InventorySettingsController.class_eval do
 
     @fishbowl_options = [ :fishbowl_host,
                           :fishbowl_user,
-                          :fishbowl_password ]
+                          :fishbowl_password,
+                          :fishbowl_store_abbreviation ]
     @location_groups = SpreeFishbowl::Client.location_groups || []
   end
 

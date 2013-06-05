@@ -1,0 +1,32 @@
+<% content_for :page_title do %>
+  <%= t(:showing_fishbowl_log) %>
+<% end %>
+
+<% content_for :page_actions do %>
+  <li><%= link_to_with_icon 'icon-arrow-left', t(:back_to_logs), admin_fishbowl_logs_path, :class => 'button' %></li>
+<% end %>
+
+<table>
+  <tbody>
+    <tr>
+      <th>Created</th>
+      <td><%= @log.created_at %></td>
+    </tr>
+    <tr>
+      <th>Order ID</th>
+      <td><%= @log.order_id %></td>
+    </tr>
+    <tr>
+      <th>Message</th>
+      <td><%= @log.message %></td>
+    </tr>
+    <tr>
+      <th style="vertical-align: top;">Request</th>
+      <td><pre><%= simple_format h(@log.request_xml) %></pre></td>
+    </tr>
+    <tr>
+      <th style="vertical-align: top;">Response</th>
+      <td><pre><%= simple_format h(@log.response_xml) %></pre></td>
+    </tr>
+  </tbody>
+</table>
