@@ -25,10 +25,9 @@ namespace :spree_fishbowl do
 
   desc "Update shipping information for all orders"
   task :sync_shipping => [:environment] do |t|
-    Spree::Order.complete.joins(:shipments).merge(Spree::Shipment.ready).
-      select { |o| o.can_ship? }.each do |order|
+    Spree::Shipment.ready.each do |shipment|
         Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
-        Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(order.id)
+        Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(shipment.order_id)
       end
   end
 
@@ -86,7 +85,7 @@ namespace :spree_fishbowl do
     # of the first and only shipment and carton until we support
     # multiple shipments / cartons per order
     order_shipments.each do |order_shipment|
-      puts '- Updating shipment #{order_shipment.id}'
+      puts "- Updating shipment #{order_shipment.id}"
       order_shipment.fishbowl_id = fishbowl_shipment.db_id
       puts "  * Fishbowl ID #{order_shipment.fishbowl_id}"
       order_shipment.tracking = cartons.first.tracking_num if cartons.length > 0
