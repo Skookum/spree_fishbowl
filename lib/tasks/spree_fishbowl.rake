@@ -26,7 +26,7 @@ namespace :spree_fishbowl do
   desc "Update shipping information for all orders"
   task :sync_shipping => [:environment] do |t|
     Spree::Order.where({ :state => 'complete' }).
-      select { |o| o.can_ship? && !o.fishbowl_id.nil? }.
+      select { |o| o.can_ship? }.
       each do |order|
         Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
         Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(order.id)
