@@ -35,7 +35,7 @@ namespace :spree_fishbowl do
 
   def issue_sales_order(order_id)
     raise 'order_id is required' if order_id.nil?
-    order = Spree::Order.find(args[:order_id])
+    order = Spree::Order.find(order_id)
     raise 'Order is incomplete' if !order.complete?
 
     puts "Processing order ##{order_id}"
