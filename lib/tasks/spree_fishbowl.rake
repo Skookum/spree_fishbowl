@@ -7,7 +7,7 @@ namespace :spree_fishbowl do
 
   desc "Create sales orders in Fishbowl for all complete, unprocessed Spree orders"
   task :issue_sales_orders => [:environment] do |t|
-    Spree::Order.where({ :fishbowl_id => nil, :state => 'complete' }).each do |order|
+    Spree::Order.complete.fishbowl_unsubmitted.each do |order|
       # Only create sales order after the order has been paid for; past
       # that point, shipping happens solely in Fishbowl (and we must have a
       # paid-for order in order to ship)
@@ -25,9 +25,8 @@ namespace :spree_fishbowl do
 
   desc "Update shipping information for all orders"
   task :sync_shipping => [:environment] do |t|
-    Spree::Order.where({ :state => 'complete' }).
-      select { |o| o.can_ship? }.
-      each do |order|
+    Spree::Order.complete.joins(:shipments).merge(Spree::Shipment.ready).
+      select { |o| o.can_ship? }.each do |order|
         Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
         Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(order.id)
       end
