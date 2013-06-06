@@ -1,25 +1,8 @@
 namespace :spree_fishbowl do
+
   desc "Create a sales order in Fishbowl for the specified Spree order"
   task :issue_sales_order, [:order_id] => [:environment] do |t, args|
-    raise 'order_id is required' if args[:order_id].nil?
-    order = Spree::Order.find(args[:order_id])
-    raise 'Order is incomplete' if !order.complete?
-
-    puts "Processing order ##{args[:order_id]}"
-    print "- Creating Fishbowl sales order ... "
-
-    sales_order = SpreeFishbowl::Client.create_sales_order(order)
-    if sales_order.blank?
-      puts "ERROR!"
-      return
-    end
-
-    puts "##{sales_order.db_id}"
-    print "- Updating order with Fishbowl information ... "
-    order.fishbowl_id = sales_order.db_id
-    order.so_number = sales_order.number
-    order.save!
-    puts "done."
+    issue_sales_order(args[:order_id])
   end
 
   desc "Create sales orders in Fishbowl for all complete, unprocessed Spree orders"
@@ -37,11 +20,47 @@ namespace :spree_fishbowl do
 
   desc "Update shipping information for an order (if any)"
   task :sync_order_shipping, [:order_id] => [:environment] do |t, args|
-    raise 'order_id is required' if args[:order_id].nil?
+    sync_order_shipping(args[:order_id])
+  end
+
+  desc "Update shipping information for all orders"
+  task :sync_shipping => [:environment] do |t|
+    Spree::Order.where({ :state => 'complete' }).
+      select { |o| o.can_ship? }.
+      each do |order|
+        Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
+        Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(order.id)
+      end
+  end
+
+  def issue_sales_order(order_id)
+    raise 'order_id is required' if order_id.nil?
     order = Spree::Order.find(args[:order_id])
+    raise 'Order is incomplete' if !order.complete?
+
+    puts "Processing order ##{order_id}"
+    print "- Creating Fishbowl sales order ... "
+
+    sales_order = SpreeFishbowl::Client.create_sales_order(order)
+    if sales_order.blank?
+      puts "ERROR!"
+      return
+    end
+
+    puts "##{sales_order.db_id}"
+    print "- Updating order with Fishbowl information ... "
+    order.fishbowl_id = sales_order.db_id
+    order.so_number = sales_order.number
+    order.save!
+    puts "done."
+  end
+
+  def sync_order_shipping(order_id)
+    raise 'order_id is required' if order_id.nil?
+    order = Spree::Order.find(order_id)
     raise 'Order not ready to be shipped' if !order.can_ship?
 
-    puts "Processing order ##{args[:order_id]}"
+    puts "Processing order ##{order_id}"
     print '- Fetching shipments ... '
     fishbowl_shipments = SpreeFishbowl::Client.get_order_shipments(order)
     if fishbowl_shipments.blank?
@@ -80,13 +99,4 @@ namespace :spree_fishbowl do
     end
   end
 
-  desc "Update shipping information for all orders"
-  task :sync_shipping => [:environment] do |t|
-    Spree::Order.where({ :state => 'complete' }).
-      select { |o| o.can_ship? }.
-      each do |order|
-        Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
-        Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(order.id)
-      end
-  end
 end
