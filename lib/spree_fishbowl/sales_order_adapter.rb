@@ -58,7 +58,7 @@ module SpreeFishbowl
     end
 
     def self.so_number(order)
-      (Spree::Config[:fishbowl_store_abbreviation] || '') + 4000000 + order.id
+      (Spree::Config[:fishbowl_store_abbreviation] || '') + (4000000 + order.id).to_s
     end
 
     def self.totals(order)
