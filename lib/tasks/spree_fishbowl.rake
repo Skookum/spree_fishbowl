@@ -7,7 +7,13 @@ namespace :spree_fishbowl do
 
     puts "Processing order ##{args[:order_id]}"
     print "- Creating Fishbowl sales order ... "
+
     sales_order = SpreeFishbowl::Client.create_sales_order(order)
+    if sales_order.blank?
+      puts "ERROR!"
+      return
+    end
+
     puts "##{sales_order.db_id}"
     print "- Updating order with Fishbowl information ... "
     order.fishbowl_id = sales_order.db_id
