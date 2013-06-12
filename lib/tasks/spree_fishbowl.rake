@@ -36,10 +36,12 @@ namespace :spree_fishbowl do
     order = Spree::Order.find(order_id)
     raise 'Order is incomplete' if !order.complete?
 
+    fishbowl = SpreeFishbowl.client_from_config
+
     puts "Processing order ##{order_id}"
     print "- Creating Fishbowl sales order ... "
 
-    sales_order = SpreeFishbowl::Client.create_sales_order(order)
+    sales_order = fishbowl.create_sales_order(order)
     if sales_order.blank?
       puts "ERROR!"
       return
@@ -58,9 +60,11 @@ namespace :spree_fishbowl do
     order = Spree::Order.find(order_id)
     raise 'Order not ready to be shipped' if !order.can_ship?
 
+    fishbowl = SpreeFishbowl.client_from_config
+
     puts "Processing order ##{order_id}"
     print '- Fetching shipments ... '
-    fishbowl_shipments = SpreeFishbowl::Client.get_order_shipments(order)
+    fishbowl_shipments = fishbowl.get_order_shipments(order)
     if fishbowl_shipments.blank?
       puts 'none found.'
       return
