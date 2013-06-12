@@ -1,5 +1,3 @@
-require 'pry'
-
 module SpreeFishbowl
   module Middleware
     class CloseFishbowlConnection
