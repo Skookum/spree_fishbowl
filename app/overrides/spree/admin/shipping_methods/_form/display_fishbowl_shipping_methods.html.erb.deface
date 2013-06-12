@@ -1,0 +1,22 @@
+<!-- replace '[data-hook="admin_shipping_method_form_fields"] > div:first-child' -->
+  <% if @fishbowl_carriers.length > 0 %>
+    <%# Can't seem to make Deface just replace the form element %>
+    <div class="alpha four columns">
+      <%= f.field_container :name do %>
+        <%= f.label :name, t(:name) %><br />
+        <%= f.select :name, @fishbowl_carriers, :include_blank => true, :class => 'select2 fullwidth' %>
+        <%= error_message_on :shipping_method, :name %>
+      <% end %>
+    </div>
+    <script type="text/javascript">
+      $('#shipping_method_name').select2();
+    </script>
+  <% else %>
+    <div class="alpha four columns">
+      <%= f.field_container :name do %>
+        <%= f.label :name, t(:name) %><br />
+        <%= f.text_field :name, :class => 'fullwidth' %>
+        <%= error_message_on :shipping_method, :name %>
+      <% end %>
+    </div>
+  <% end %>
