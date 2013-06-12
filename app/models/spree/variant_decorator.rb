@@ -1,5 +1,9 @@
 module Spree
   Variant.class_eval do
+    include ActiveModel::Validations
+
+    validates :sku, :presence => true, 'spree_fishbowl/sku_in_fishbowl' => true
+
     alias_method :orig_on_hand, :on_hand
 
     def on_hand
