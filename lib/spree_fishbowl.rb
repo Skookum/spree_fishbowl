@@ -3,6 +3,8 @@ require 'spree_fishbowl/engine'
 
 module SpreeFishbowl
 
+  @@fishbowl = nil
+
   def self.connection
     @@fishbowl
   end
