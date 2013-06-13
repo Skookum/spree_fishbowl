@@ -3,8 +3,8 @@ module Spree
     has_many :fishbowl_logs
     attr_accessible :fishbowl_id, :so_number
 
-    scope :fishbowl_submitted, lambda { where(table[:fishbowl_id].not_eq(nil)) }
-    scope :fishbowl_unsubmitted, lambda { where(table[:fishbowl_id].eq(nil)) }
+    scope :fishbowl_submitted, lambda { where(arel_table[:fishbowl_id].not_eq(nil)) }
+    scope :fishbowl_unsubmitted, lambda { where(arel_table[:fishbowl_id].eq(nil)) }
 
     alias_method :original_can_ship?, :can_ship?
 
