@@ -10,9 +10,7 @@ module SpreeFishbowl
   end
 
   def self.enabled?
-    defined? @@enabled ?
-      @@enabled :
-      Spree::Config[:enable_fishbowl]
+    Spree::Config[:enable_fishbowl]
   end
 
   def self.client_from_config
