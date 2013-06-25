@@ -4,6 +4,7 @@ module SpreeFishbowl
     def validate_each(record, attribute, value)
       record.errors[attribute] << 'is not a valid product in Fishbowl' if (
         SpreeFishbowl.enabled? &&
+        value.present? &&
         SpreeFishbowl.client_from_config.part(value).nil?
       )
     end

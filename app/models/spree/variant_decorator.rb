@@ -2,7 +2,7 @@ module Spree
   Variant.class_eval do
     include ActiveModel::Validations
 
-    validates :sku, :presence => true, 'spree_fishbowl/sku_in_fishbowl' => true
+    validates :sku, 'spree_fishbowl/sku_in_fishbowl' => true, :if => "sku.present?"
 
     alias_method :orig_on_hand, :on_hand
 
