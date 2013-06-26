@@ -57,12 +57,13 @@ namespace :spree_fishbowl do
 
   def sync_order_shipping(order_id)
     raise 'order_id is required' if order_id.nil?
+
+    puts "Processing order ##{order_id}"
     order = Spree::Order.find(order_id)
     raise 'Order not ready to be shipped' if !order.can_ship?
 
     fishbowl = SpreeFishbowl.client_from_config
 
-    puts "Processing order ##{order_id}"
     print '- Fetching shipments ... '
     fishbowl_shipments = fishbowl.get_order_shipments(order)
     if fishbowl_shipments.blank?
