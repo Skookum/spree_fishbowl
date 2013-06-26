@@ -5,6 +5,7 @@ module Spree
     validates :sku, 'spree_fishbowl/sku_in_fishbowl' => true, :if => "sku.present?"
 
     alias_method :orig_on_hand, :on_hand
+    alias_method :orig_on_hand=, :on_hand=
 
     def on_hand
       return orig_on_hand if (!SpreeFishbowl.enabled? || !sku)
@@ -18,7 +19,9 @@ module Spree
     end
 
     def on_hand=(new_level)
-      # no-op
+      return orig_on_hand=(new_level) if !SpreeFishbowl.enabled?
+
+      # no-op otherwise
     end
 
   end
