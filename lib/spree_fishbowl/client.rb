@@ -58,8 +58,8 @@ module SpreeFishbowl
           @fishbowl = Fishbowl::Connection.new(:host => hostname).
                         connect.login(user, password)
         end
-      rescue
-        # eat connection errors, for now
+      rescue Exception => e
+        Rails.logger.debug e
       end
 
       connected?
@@ -146,13 +146,13 @@ module SpreeFishbowl
           fishbowl.send(request_name, params)
         rescue Fishbowl::Errors::StatusError => e
           # nothing special at the moment
-          #raise e
           @last_error = e
+          Rails.logger.debug e
           nil
         ensure
           @last_request = fishbowl.last_request
           @last_response = fishbowl.last_response
-          #fishbowl.close
+          fishbowl.close
         end
       end
     end
