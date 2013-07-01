@@ -13,7 +13,9 @@ module Spree
     end
 
     def can_ship?
-      original_can_ship? && fishbowl_sales_order_created?
+      original_can_ship? && (
+        !SpreeFishbowl.enabled? || fishbowl_sales_order_created?
+      )
     end
   end
 end
