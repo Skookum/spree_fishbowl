@@ -5,7 +5,7 @@ module Spree
     # multiple shipments per order
     #attr_accessible :carton_id
 
-    state_machine.before_transition :to => 'shipped', :do => :has_shipping_details?
+    state_machine.before_transition :to => 'shipped', :do => :has_shipping_details?, :if => lambda { SpreeFishbowl.enabled? }
 
     def has_shipping_details?
       fishbowl_id.present?
