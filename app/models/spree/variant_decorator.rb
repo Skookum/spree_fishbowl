@@ -12,7 +12,12 @@ module Spree
 
       if Spree::Config[:track_inventory_levels] && !self.on_demand
         available = SpreeFishbowl.client_from_config.available_inventory(self)
-        available.nil? ? orig_on_hand : available
+        if available.nil?
+          orig_on_hand
+        else
+          update(:count_on_hand => available)
+          available
+        end
       else
         (1.0 / 0) # Infinity
       end
