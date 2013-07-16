@@ -3,7 +3,7 @@ module Spree
     include ActiveModel::Validations
 
     validates :sku, 'spree_fishbowl/sku_in_fishbowl' => true,
-      :if => lambda { |variant| variant.is_master? && variant.sku.present? }
+      :if => lambda { |variant| !variant.is_master? && variant.sku.present? }
 
     alias_method :orig_on_hand, :on_hand
     alias_method :orig_on_hand=, :on_hand=
