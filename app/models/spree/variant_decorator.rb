@@ -2,7 +2,8 @@ module Spree
   Variant.class_eval do
     include ActiveModel::Validations
 
-    validates :sku, 'spree_fishbowl/sku_in_fishbowl' => true, :if => "sku.present?"
+    validates :sku, 'spree_fishbowl/sku_in_fishbowl' => true,
+      :if => lambda { |variant| variant.is_master? && variant.sku.present? }
 
     alias_method :orig_on_hand, :on_hand
     alias_method :orig_on_hand=, :on_hand=
@@ -24,8 +25,7 @@ module Spree
     end
 
     def on_hand=(new_level)
-      return orig_on_hand=(new_level) if !SpreeFishbowl.enabled?
-
+      orig_on_hand = (new_level) if !SpreeFishbowl.enabled?
       # no-op otherwise
     end
 
