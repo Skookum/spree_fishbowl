@@ -25,6 +25,11 @@ namespace :spree_fishbowl do
 
   desc "Update shipping information for all orders"
   task :sync_shipping => [:environment] do |t|
+    # To work around issue with orders not transitioning shipments
+    # to "ready" state
+    Spree::Shipment.pending.each do |shipment|
+      shipment.ready if shipment.can_ready?
+    end
     Spree::Shipment.ready.each do |shipment|
         Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
         Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(shipment.order_id)
