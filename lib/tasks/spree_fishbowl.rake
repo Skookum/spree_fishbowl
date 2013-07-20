@@ -2,7 +2,11 @@ namespace :spree_fishbowl do
 
   desc "Create a sales order in Fishbowl for the specified Spree order"
   task :issue_sales_order, [:order_id] => [:environment] do |t, args|
-    issue_sales_order(args[:order_id])
+    begin
+      issue_sales_order(args[:order_id])
+    rescue RuntimeError => e
+      puts "ERROR: #{e}"
+    end
   end
 
   desc "Create sales orders in Fishbowl for all complete, unprocessed Spree orders"
@@ -20,7 +24,11 @@ namespace :spree_fishbowl do
 
   desc "Update shipping information for an order (if any)"
   task :sync_order_shipping, [:order_id] => [:environment] do |t, args|
-    sync_order_shipping(args[:order_id])
+    begin
+      sync_order_shipping(args[:order_id])
+    rescue RuntimeError => e
+      puts "ERROR: #{e}"
+    end
   end
 
   desc "Update shipping information for all orders"
@@ -31,9 +39,9 @@ namespace :spree_fishbowl do
       shipment.ready if shipment.can_ready?
     end
     Spree::Shipment.ready.each do |shipment|
-        Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
-        Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(shipment.order_id)
-      end
+      Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
+      Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(shipment.order_id)
+    end
   end
 
   def issue_sales_order(order_id)
@@ -48,7 +56,7 @@ namespace :spree_fishbowl do
 
     sales_order = fishbowl.create_sales_order(order)
     if sales_order.blank?
-      puts "ERROR!"
+      puts "ERROR: (from Fishbowl) #{fishbowl.last_error}"
       return
     end
 
