@@ -7,7 +7,7 @@ module SpreeFishbowl
 
     define_callbacks :request
 
-    attr_reader :hostname, :user, :password, :location_group,
+    attr_reader :hostname, :port, :user, :password, :location_group,
       :last_error, :last_request, :last_response
 
     def initialize(options = nil)
@@ -21,6 +21,7 @@ module SpreeFishbowl
     def self.from_config
       self.new({
         :hostname => Spree::Config[:fishbowl_host],
+        :port => Spree::Config[:fishbowl_port],
         :user => Spree::Config[:fishbowl_user],
         :password => Spree::Config[:fishbowl_password],
         :location_group => Spree::Config[:fishbowl_location_group]
@@ -28,7 +29,7 @@ module SpreeFishbowl
     end
 
     def set_options(options)
-      [:hostname, :user, :password, :location_group].each do |o|
+      [:hostname, :port, :user, :password, :location_group].each do |o|
         instance_variable_set("@#{o}", options[o])
       end
     end
@@ -55,7 +56,7 @@ module SpreeFishbowl
             @fishbowl.connect.login(user, password)
           end
         else
-          @fishbowl = Fishbowl::Connection.new(:host => hostname).
+          @fishbowl = Fishbowl::Connection.new(:host => hostname, :port => port).
                         connect.login(user, password)
         end
       rescue Exception => e

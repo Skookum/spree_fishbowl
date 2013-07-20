@@ -6,6 +6,7 @@ Spree::Admin::InventorySettingsController.class_eval do
     pre_settings_edit if respond_to?(:pre_settings_edit)
 
     @fishbowl_options = [ :fishbowl_host,
+                          :fishbowl_port,
                           :fishbowl_user,
                           :fishbowl_password,
                           :fishbowl_store_abbreviation ]
