@@ -138,7 +138,7 @@ module SpreeFishbowl
           end
         ]
       ensure
-        connection.close
+        @fishbowl && @fishbowl.close
         set_auto_close(previous_auto_close)
       end
     end
