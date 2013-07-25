@@ -16,6 +16,7 @@ module SpreeFishbowl
       @fishbowl = nil
       @last_error = nil
       @last_request, @last_response = nil, nil
+      @auto_close = true
     end
 
     def self.from_config
@@ -32,6 +33,12 @@ module SpreeFishbowl
       [:hostname, :port, :user, :password, :location_group].each do |o|
         instance_variable_set("@#{o}", options[o])
       end
+    end
+
+    # You MUST manually close the connection if you disable
+    # auto-close
+    def set_auto_close(do_auto_close = true)
+      @auto_close = do_auto_close
     end
 
     def self.enabled?
@@ -112,6 +119,30 @@ module SpreeFishbowl
       }) unless fb_product.nil?
     end
 
+    def update_all_available_inventory
+      previous_auto_close = @auto_close
+      set_auto_close(false)
+
+      inventory_counts = {}
+      begin
+        Hash[
+          Spree::Variant.all.reject do |variant|
+            variant.sku.blank? || (
+              variant.is_master? && variant.product.has_variants?
+            )
+          end.map do |variant|
+            inventory = available_inventory(variant)
+            yield [variant, inventory] if block_given?
+            (variant.orig_on_hand = inventory) unless inventory.nil?
+            [variant.sku, inventory]
+          end
+        ]
+      ensure
+        connection.close
+        set_auto_close(previous_auto_close)
+      end
+    end
+
     def create_customer(order)
       customer_obj = CustomerAdapter.adapt(order)
       execute_request(:save_customer, { :customer => customer_obj }, order.id)
@@ -161,7 +192,7 @@ module SpreeFishbowl
         ensure
           @last_request = fishbowl.last_request
           @last_response = fishbowl.last_response
-          fishbowl.close
+          fishbowl.close if @auto_close
         end
       end
     end

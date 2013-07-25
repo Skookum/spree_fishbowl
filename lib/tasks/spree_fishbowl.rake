@@ -1,5 +1,15 @@
 namespace :spree_fishbowl do
 
+  desc "Sync inventory for all variants"
+  task :sync_inventory => [:environment] do
+    fishbowl = SpreeFishbowl.client_from_config
+    fishbowl.update_all_available_inventory do |variant, on_hand|
+      if on_hand && (variant.orig_on_hand != on_hand)
+        puts "Setting on-hand count to #{on_hand} for #{variant.sku} (was #{variant.orig_on_hand})"
+      end
+    end
+  end
+
   desc "Create a sales order in Fishbowl for the specified Spree order"
   task :issue_sales_order, [:order_id] => [:environment] do |t, args|
     begin
@@ -42,6 +52,11 @@ namespace :spree_fishbowl do
       Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
       Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(shipment.order_id)
     end
+  end
+
+  desc "Run all Fishbowl sync tasks"
+  task :sync => [:issue_sales_orders, :sync_inventory, :sync_shipping] do
+    # No-op, just run the above
   end
 
   def issue_sales_order(order_id)

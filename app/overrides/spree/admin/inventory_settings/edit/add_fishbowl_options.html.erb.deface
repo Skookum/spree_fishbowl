@@ -10,6 +10,11 @@
             <%= text_field_tag('preferences[' + key.to_s + ']', Spree::Config[key], { :size => 10, :class => 'fullwidth' }) %>
           </div>
       <% end %>
+      <div class="field">
+        <%= hidden_field_tag 'preferences[fishbowl_always_fetch_current_inventory]', '0' %>
+        <%= check_box_tag('preferences[fishbowl_always_fetch_current_inventory]', "1", Spree::Config[:fishbowl_always_fetch_current_inventory]) %>
+        <%= t(:always_fetch_current_inventory) %>
+      </div>
       <% if !@location_groups.empty? %>
         <div class="field">
           <%= label_tag(:fishbowl_location_group, t(:location_group) + ': ') + tag(:br) %>

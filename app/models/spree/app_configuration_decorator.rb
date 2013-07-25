@@ -7,5 +7,6 @@ Spree::AppConfiguration.class_eval do
   preference :fishbowl_password, :password, :default => nil
   preference :fishbowl_store_abbreviation, :string, :default => nil
   preference :fishbowl_location_group, :string, :default => nil
+  preference :fishbowl_always_fetch_current_inventory, :boolean, :default => true
 
 end
