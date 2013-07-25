@@ -90,6 +90,12 @@ module SpreeFishbowl
       }) || nil
     end
 
+    def product(sku)
+      execute_request(:get_product, {
+        :product_num => sku
+      }) || nil
+    end
+
     def parts
       execute_request(:get_light_part_list) || []
     end
@@ -98,10 +104,12 @@ module SpreeFishbowl
       location_group = location_group || @location_group
       return nil if location_group.blank? || variant.sku.blank?
 
+      fb_product = product(variant.sku)
+
       execute_request(:get_total_inventory, {
-        :part_number => variant.sku,
+        :part_number => fb_product.part.num,
         :location_group => location_group
-      })
+      }) unless fb_product.nil?
     end
 
     def create_customer(order)
