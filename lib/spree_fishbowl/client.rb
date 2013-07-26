@@ -119,13 +119,14 @@ module SpreeFishbowl
       }) unless fb_product.nil?
     end
 
-    def update_all_available_inventory
+    def all_available_inventory
       previous_auto_close = @auto_close
       set_auto_close(false)
 
-      inventory_counts = {}
       begin
         Hash[
+          # This is inefficient, but constructing this in a single
+          # Arel query will take a bit of time
           Spree::Variant.all.reject do |variant|
             variant.sku.blank? || (
               variant.is_master? && variant.product.has_variants?
@@ -133,8 +134,7 @@ module SpreeFishbowl
           end.map do |variant|
             inventory = available_inventory(variant)
             yield [variant, inventory] if block_given?
-            (variant.orig_on_hand = inventory) unless inventory.nil?
-            [variant.sku, inventory]
+            [variant, inventory]
           end
         ]
       ensure
