@@ -5,7 +5,7 @@ module SpreeFishbowl
       record.errors[attribute] << 'is not a valid product in Fishbowl' if (
         SpreeFishbowl.enabled? &&
         value.present? &&
-        SpreeFishbowl.client_from_config.part(value).nil?
+        SpreeFishbowl.client_from_config.product(value).nil?
       )
     end
 
