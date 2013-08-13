@@ -9,7 +9,7 @@ module SpreeFishbowl
         :name => order.billing_address.full_name,
         :job_depth => 1,
         :active => true,
-        :tax_rate => order.shipping_address.state.abbr,
+        :tax_rate => nil,
         :addresses => addresses(order).map do |a|
           Fishbowl::Objects::Address.from_hash(a)
         end
