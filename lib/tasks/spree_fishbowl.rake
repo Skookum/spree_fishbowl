@@ -18,7 +18,7 @@ namespace :spree_fishbowl do
   task :issue_sales_order, [:order_id] => [:environment] do |t, args|
     begin
       issue_sales_order(args[:order_id])
-    rescue RuntimeError => e
+    rescue Exception => e
       puts "ERROR: #{e}"
     end
   end
@@ -40,7 +40,7 @@ namespace :spree_fishbowl do
   task :sync_order_shipping, [:order_id] => [:environment] do |t, args|
     begin
       sync_order_shipping(args[:order_id])
-    rescue RuntimeError => e
+    rescue Exception => e
       puts "ERROR: #{e}"
     end
   end
