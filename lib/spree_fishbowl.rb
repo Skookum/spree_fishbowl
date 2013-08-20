@@ -7,8 +7,8 @@ module SpreeFishbowl
     Spree::Config[:enable_fishbowl]
   end
 
-  def self.client_from_config
-    SpreeFishbowl::Client.from_config
+  def self.client_from_config(addl_options = {})
+    SpreeFishbowl::Client.from_config(addl_options)
   end
 
 end

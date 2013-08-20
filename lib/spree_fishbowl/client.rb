@@ -11,6 +11,7 @@ module SpreeFishbowl
       :last_error, :last_request, :last_response
 
     def initialize(options = nil)
+      @max_retries = options[:max_retries] || 1
       set_options(options) if options
       # initializing like a boss
       @fishbowl = nil
@@ -19,14 +20,14 @@ module SpreeFishbowl
       @auto_close = true
     end
 
-    def self.from_config
+    def self.from_config(addl_options = {})
       self.new({
         :hostname => Spree::Config[:fishbowl_host],
         :port => Spree::Config[:fishbowl_port],
         :user => Spree::Config[:fishbowl_user],
         :password => Spree::Config[:fishbowl_password],
         :location_group => Spree::Config[:fishbowl_location_group]
-      })
+      }.merge(addl_options))
     end
 
     def set_options(options)
