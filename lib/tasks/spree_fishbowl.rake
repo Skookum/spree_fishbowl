@@ -4,12 +4,16 @@ namespace :spree_fishbowl do
   task :sync_inventory => [:environment] do
     unless Spree::Config[:fishbowl_always_fetch_current_inventory]
       fishbowl = SpreeFishbowl.client_from_config
-      fishbowl.all_available_inventory do |variant, on_hand|
-        unless on_hand.nil?
-          puts "Setting on-hand count to #{on_hand} for #{variant.sku} (was #{variant.orig_on_hand})"
-          variant.on_hand = on_hand
-          variant.save
+      begin
+        fishbowl.all_available_inventory do |variant, on_hand|
+          unless on_hand.nil? || (variant.orig_on_hand === on_hand)
+            puts "Setting on-hand count to #{on_hand} for #{variant.sku} (was #{variant.orig_on_hand})"
+            variant.on_hand = on_hand
+            variant.save
+          end
         end
+      rescue Exception => e
+        puts "ERROR: #{e}"
       end
     end
   end

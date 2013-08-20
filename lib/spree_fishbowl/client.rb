@@ -3,9 +3,6 @@ require 'fishbowl'
 module SpreeFishbowl
 
   class Client
-    include ActiveSupport::Callbacks
-
-    define_callbacks :request
 
     attr_reader :hostname, :port, :user, :password, :location_group,
       :last_error, :last_request, :last_response
@@ -79,6 +76,10 @@ module SpreeFishbowl
       true
     end
 
+    def reconnect
+      disconnect && connect
+    end
+
     def customer(name)
       execute_request(:get_customer, { :name => name }) || nil
     end
@@ -121,26 +122,16 @@ module SpreeFishbowl
     end
 
     def all_available_inventory
-      previous_auto_close = @auto_close
-      set_auto_close(false)
-
-      begin
-        Hash[
-          # This is inefficient, but constructing this in a single
-          # Arel query will take a bit of time
-          Spree::Variant.all.reject do |variant|
-            variant.sku.blank? || (
-              variant.is_master? && variant.product.has_variants?
-            )
-          end.map do |variant|
-            inventory = available_inventory(variant)
-            yield [variant, inventory] if block_given?
-            [variant, inventory]
-          end
-        ]
-      ensure
-        @fishbowl && @fishbowl.close
-        set_auto_close(previous_auto_close)
+      # This is inefficient, but constructing this in a single
+      # Arel query will take a bit of time
+      Spree::Variant.all.reject do |variant|
+        variant.sku.blank? || (
+          variant.is_master? && variant.product.has_variants?
+        )
+      end.each do |variant|
+        inventory = available_inventory(variant)
+        yield [variant, inventory] if block_given?
+        [variant, inventory]
       end
     end
 
@@ -151,7 +142,7 @@ module SpreeFishbowl
 
     def create_sales_order(order, issue = true)
       sales_order = SalesOrderAdapter.adapt(order)
-      if !sales_order.customer_name.nil?
+      if sales_order.customer_name.present?
         customer_obj = customer(sales_order.customer_name)
         create_customer(order) if !customer_obj
       end
@@ -181,21 +172,33 @@ module SpreeFishbowl
       fishbowl = connection
       return nil if !connected?
 
-      run_callbacks :request do
-        begin
-          @last_error = nil
-          fishbowl.send(request_name, params)
-        rescue Fishbowl::Errors::StatusError => e
-          # nothing special at the moment
-          @last_error = e
-          Rails.logger.debug e
-          nil
-        ensure
-          @last_request = fishbowl.last_request
-          @last_response = fishbowl.last_response
-          fishbowl.close if @auto_close
+      failure_count = 0
+
+      begin
+        @last_error = nil
+        fishbowl.send(request_name, params)
+      rescue Fishbowl::Errors::ServerError => e
+        Rails.logger.debug e
+        # Attempt call up to three times
+        unless ((failure_count += 1) <= @max_retries && reconnect)
+          log_error e
+          return nil
         end
+        retry
+      rescue Fishbowl::Errors::StatusError => e
+        # Nothing special at the moment
+        log_error e
+        return nil
+      ensure
+        @last_request = fishbowl.last_request
+        @last_response = fishbowl.last_response
+        fishbowl.close if @auto_close
       end
+    end
+
+    def log_error(e)
+      @last_error = e
+      Rails.logger.debug e
     end
 
   end
