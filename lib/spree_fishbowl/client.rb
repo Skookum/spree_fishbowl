@@ -52,6 +52,14 @@ module SpreeFishbowl
       !!@fishbowl && @fishbowl.connected?
     end
 
+    def error?
+      !!@last_error
+    end
+
+    def error
+      @last_error
+    end
+
     def connect
       return false if !configured?
 
