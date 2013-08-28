@@ -152,7 +152,12 @@ module SpreeFishbowl
       sales_order = SalesOrderAdapter.adapt(order)
       if sales_order.customer_name.present?
         customer_obj = customer(sales_order.customer_name)
-        create_customer(order) if !customer_obj
+        if !customer_obj
+          create_customer(order)
+          # customer creation doesn't return a value, so we
+          # need to check if an error was set
+          return nil if error?
+        end
       end
       execute_request(:save_sales_order, { :issue => issue, :sales_order => sales_order}, order.id)
     end
