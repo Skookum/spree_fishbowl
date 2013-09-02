@@ -119,14 +119,14 @@ module SpreeFishbowl
 
     def available_inventory(variant, location_group = nil)
       location_group = location_group || @location_group
-      return nil if location_group.blank? || variant.sku.blank?
+      return nil if variant.sku.blank?
 
       fb_product = product(variant.sku)
 
-      execute_request(:get_total_inventory, {
-        :part_number => fb_product.part.num,
-        :location_group => location_group
-      }) unless fb_product.nil?
+      inventory_counts = execute_request(:get_inventory_quantity, {
+          :part_number => fb_product.part.num
+        }) unless fb_product.nil?
+      inventory_counts.qty_available if inventory_counts
     end
 
     def all_available_inventory
