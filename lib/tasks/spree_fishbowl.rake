@@ -126,17 +126,15 @@ namespace :spree_fishbowl do
     # of the first and only shipment and carton until we support
     # multiple shipments / cartons per order
     order_shipments.each do |order_shipment|
-      order_shipment.transaction do
-        puts "- Updating shipment #{order_shipment.id}"
-        order_shipment.fishbowl_id = fishbowl_shipment.db_id
-        puts "  * Fishbowl ID #{order_shipment.fishbowl_id}"
-        order_shipment.tracking = cartons.first.tracking_num if cartons.length > 0
-        puts "  * Tracking number '#{order_shipment.tracking}'"
-        order_shipment.save
+      puts "- Updating shipment #{order_shipment.id}"
+      order_shipment.fishbowl_id = fishbowl_shipment.db_id
+      puts "  * Fishbowl ID #{order_shipment.fishbowl_id}"
+      order_shipment.tracking = cartons.first.tracking_num if cartons.length > 0
+      puts "  * Tracking number '#{order_shipment.tracking}'"
+      order_shipment.save
 
-        puts '- Transitioning to shipped state'
-        order_shipment.ship!
-      end
+      puts '- Transitioning to shipped state'
+      order_shipment.ship!
     end
   end
 
