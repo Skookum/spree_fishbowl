@@ -29,7 +29,7 @@ namespace :spree_fishbowl do
 
   desc "Create sales orders in Fishbowl for all complete, unprocessed Spree orders"
   task :issue_sales_orders => [:environment] do |t|
-    Spree::Order.complete.fishbowl_unsubmitted.each do |order|
+    Spree::Order.with_state(:complete).fishbowl_unsubmitted.each do |order|
       # Only create sales order after the order has been paid for; past
       # that point, shipping happens solely in Fishbowl (and we must have a
       # paid-for order in order to ship)
