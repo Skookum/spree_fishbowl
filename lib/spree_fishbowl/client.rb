@@ -126,7 +126,11 @@ module SpreeFishbowl
       inventory_counts = execute_request(:get_inventory_quantity, {
           :part_number => fb_product.part.num
         }) unless fb_product.nil?
-      inventory_counts.first.qty_available if inventory_counts && inventory_counts.count
+      if inventory_counts && inventory_counts.first
+        inventory_counts.first.qty_available
+      else
+        nil
+      end
     end
 
     def all_available_inventory
