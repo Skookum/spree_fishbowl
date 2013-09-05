@@ -131,10 +131,9 @@ namespace :spree_fishbowl do
       puts "  * Fishbowl ID #{order_shipment.fishbowl_id}"
       order_shipment.tracking = cartons.first.tracking_num if cartons.length > 0
       puts "  * Tracking number '#{order_shipment.tracking}'"
-      order_shipment.save
-
       puts '- Transitioning to shipped state'
       order_shipment.ship!
+      order_shipment.save
     end
   end
 
