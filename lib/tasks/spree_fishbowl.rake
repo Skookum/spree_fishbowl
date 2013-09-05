@@ -56,9 +56,9 @@ namespace :spree_fishbowl do
     Spree::Shipment.pending.each do |shipment|
       shipment.ready if shipment.can_ready?
     end
-    Spree::Shipment.ready.each do |shipment|
+    Spree::Order.with_state(:complete).where(:shipment_state => :ready).each do |order|
       Rake::Task['spree_fishbowl:sync_order_shipping'].reenable
-      Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(shipment.order_id)
+      Rake::Task['spree_fishbowl:sync_order_shipping'].invoke(order.id)
     end
   end
 
@@ -74,7 +74,7 @@ namespace :spree_fishbowl do
 
     fishbowl = SpreeFishbowl.client_from_config
 
-    puts "Processing order ##{order_id}"
+    puts "Processing order ##{order.id} (#{order.number})"
     print "- Creating Fishbowl sales order ... "
 
     sales_order = fishbowl.create_sales_order(order)
@@ -94,8 +94,8 @@ namespace :spree_fishbowl do
   def sync_order_shipping(order_id)
     raise 'order_id is required' if order_id.nil?
 
-    puts "Processing order ##{order_id}"
     order = Spree::Order.find(order_id)
+    puts "Processing order ##{order.id} (#{order.number})"
     raise 'Order not ready to be shipped' if !order.can_ship?
 
     fishbowl = SpreeFishbowl.client_from_config
