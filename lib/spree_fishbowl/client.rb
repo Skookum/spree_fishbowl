@@ -97,8 +97,8 @@ module SpreeFishbowl
     end
 
     def login!
-      connect! || raise Fishbowl::Errors::ConnectionNotEstablished
-      @fishbowl.login(username, password).has_ticket?
+      connect! || (raise Fishbowl::Errors::ConnectionNotEstablished.new)
+      @fishbowl.login(user, password).has_ticket?
     end
 
     def login
