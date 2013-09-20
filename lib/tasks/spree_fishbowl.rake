@@ -2,28 +2,16 @@ namespace :spree_fishbowl do
 
   desc "Sync inventory for all variants"
   task :sync_inventory => [:environment] do
-    unless Spree::Config[:fishbowl_always_fetch_current_inventory]
-      fishbowl = SpreeFishbowl.client_from_config
-      begin
-        fishbowl.all_available_inventory do |variant, on_hand|
-          unless on_hand.nil? || (variant.orig_on_hand === on_hand)
-            puts "Setting on-hand count to #{on_hand} for #{variant.sku} (was #{variant.orig_on_hand})"
-            variant.on_hand = on_hand
-            variant.save
-          end
-        end
-      rescue Exception => e
-        puts "ERROR: #{e}"
-      end
-    end
+    # errors are rescued inside the method because it iterates
+    # across all variants, and we don't want a single exception to
+    # stop the batch process
+    sync_inventory unless Spree::Config[:fishbowl_always_fetch_current_inventory]
   end
 
   desc "Create a sales order in Fishbowl for the specified Spree order"
   task :issue_sales_order, [:order_id] => [:environment] do |t, args|
-    begin
+    rescue_errors do
       issue_sales_order(args[:order_id])
-    rescue Exception => e
-      puts "ERROR: #{e}"
     end
   end
 
@@ -42,10 +30,8 @@ namespace :spree_fishbowl do
 
   desc "Update shipping information for an order (if any)"
   task :sync_order_shipping, [:order_id] => [:environment] do |t, args|
-    begin
+    rescue_errors do
       sync_order_shipping(args[:order_id])
-    rescue Exception => e
-      puts "ERROR: #{e}"
     end
   end
 
@@ -77,11 +63,7 @@ namespace :spree_fishbowl do
     puts "Processing order ##{order.id} (#{order.number})"
     print "- Creating Fishbowl sales order ... "
 
-    sales_order = fishbowl.create_sales_order(order)
-    if sales_order.blank?
-      puts "ERROR: (from Fishbowl) #{fishbowl.last_error}"
-      return
-    end
+    sales_order = fishbowl.create_sales_order!(order)
 
     puts "##{sales_order.db_id}"
     print "- Updating order with Fishbowl information ... "
@@ -101,7 +83,7 @@ namespace :spree_fishbowl do
     fishbowl = SpreeFishbowl.client_from_config
 
     print '- Fetching shipments ... '
-    fishbowl_shipments = fishbowl.get_order_shipments(order)
+    fishbowl_shipments = fishbowl.get_order_shipments!(order)
     if fishbowl_shipments.blank?
       puts 'none found.'
       return
@@ -137,4 +119,31 @@ namespace :spree_fishbowl do
     end
   end
 
+  def sync_inventory
+    fishbowl = SpreeFishbowl.client_from_config
+    # This is inefficient, but constructing this in a single
+    # Arel query will take a bit of time
+    Spree::Variant.all.reject do |variant|
+      variant.sku.blank? || (
+        variant.is_master? && variant.product.has_variants?
+      )
+    end.each do |variant|
+      rescue_errors do
+        inventory = fishbowl.available_inventory!(variant)
+        unless inventory.nil? || (variant.orig_on_hand === inventory)
+          puts "Setting on-hand count to #{inventory} for #{variant.sku} (was #{variant.orig_on_hand})"
+          variant.on_hand = inventory
+          variant.save
+        end
+      end
+    end
+  end
+
+  def rescue_errors
+    yield if block_given?
+  rescue Fishbowl::Errors::ServerError, Fishbowl::Errors::StatusError => e
+    puts "ERROR (from Fishbowl): #{e}"
+  rescue => e
+    puts "ERROR: #{e}"
+  end
 end

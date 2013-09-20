@@ -60,68 +60,98 @@ module SpreeFishbowl
       @last_error
     end
 
-    def connect
+    def connect!
       return false if !configured?
 
-      begin
-        if @fishbowl
-          if !@fishbowl.connected?
-            @fishbowl.connect.login(user, password)
-          end
-        else
-          @fishbowl = Fishbowl::Connection.new(:host => hostname, :port => port).
-                        connect.login(user, password)
-        end
-      rescue Exception => e
-        Rails.logger.debug e
+      if @fishbowl
+        @fishbowl.connect.login(user, password) if !@fishbowl.connected?
+      else
+        @fishbowl = Fishbowl::Connection.new(:host => hostname, :port => port).
+                      connect.login(user, password)
       end
 
       connected?
     end
 
-    def disconnect
+    def connect
+      connect! rescue false
+    end
+
+    def disconnect!
       @fishbowl.close if connected?
       true
     end
 
+    def disconnect
+      disconnect! rescue false
+    end
+
+    def reconnect!
+      disconnect! && connect!
+    end
+
     def reconnect
-      disconnect && connect
+      reconnect! rescue false
+    end
+
+    def customer!(name)
+      execute_request(:get_customer, { :name => name })
     end
 
     def customer(name)
-      execute_request(:get_customer, { :name => name }) || nil
+      customer! rescue nil
+    end
+
+    def carriers!
+      execute_request(:get_carrier_list)
     end
 
     def carriers
-      execute_request(:get_carrier_list) || []
+      carriers! rescue []
+    end
+
+    def location_groups!
+      execute_request(:get_location_group_list)
     end
 
     def location_groups
-      execute_request(:get_location_group_list) || []
+      location_groups! rescue []
     end
 
-    def part(sku, location_group = nil)
+    def part!(sku, location_group = nil)
       execute_request(:get_part, {
         :part_num => sku,
         :location_group => location_group || @location_group
-      }) || nil
+      })
+    end
+
+    def part(*args)
+      part!(*args) rescue nil
+    end
+
+    def product!(sku)
+      execute_request(:get_product, {
+        :product_num => sku
+      })
     end
 
     def product(sku)
-      execute_request(:get_product, {
-        :product_num => sku
-      }) || nil
+      product!(sku) rescue nil
+    end
+
+    def parts!
+      execute_request(:get_light_part_list)
     end
 
     def parts
-      execute_request(:get_light_part_list) || []
+      parts! rescue []
     end
 
-    def available_inventory(variant, location_group = nil)
+    def available_inventory!(variant, location_group = nil)
       location_group = location_group || @location_group
       return nil if variant.sku.blank?
 
-      fb_product = product(variant.sku)
+      fb_product = product!(variant.sku)
 
       inventory_counts = execute_request(:get_inventory_quantity, {
           :part_number => fb_product.part.num
@@ -133,40 +163,35 @@ module SpreeFishbowl
       end
     end
 
-    def all_available_inventory
-      # This is inefficient, but constructing this in a single
-      # Arel query will take a bit of time
-      Spree::Variant.all.reject do |variant|
-        variant.sku.blank? || (
-          variant.is_master? && variant.product.has_variants?
-        )
-      end.each do |variant|
-        inventory = available_inventory(variant)
-        yield [variant, inventory] if block_given?
-        [variant, inventory]
-      end
+    def available_inventory(*args)
+      available_inventory!(*args) rescue nil
     end
 
-    def create_customer(order)
+    def create_customer!(order)
       customer_obj = CustomerAdapter.adapt(order)
       execute_request(:save_customer, { :customer => customer_obj }, order.id)
     end
 
-    def create_sales_order(order, issue = true)
+    def create_customer(order)
+      create_customer! rescue nil
+    end
+
+    def create_sales_order!(order, issue = true)
       sales_order = SalesOrderAdapter.adapt(order)
       if sales_order.customer_name.present?
         customer_obj = customer(sales_order.customer_name)
         if !customer_obj
-          create_customer(order)
-          # customer creation doesn't return a value, so we
-          # need to check if an error was set
-          return nil if error?
+          create_customer!(order)
         end
       end
       execute_request(:save_sales_order, { :issue => issue, :sales_order => sales_order}, order.id)
     end
 
-    def get_order_shipments(order)
+    def create_sales_order(*args)
+      create_sales_order!(*args) rescue nil
+    end
+
+    def get_order_shipments!(order)
       ship_results = execute_request(:get_ship_list, {
         :order_number => order.so_number,
         :record_count => 50
@@ -178,6 +203,10 @@ module SpreeFishbowl
         end if !ship_results.nil?
     end
 
+    def get_order_shipments(order)
+      get_order_shipments!(order) rescue []
+    end
+
   private
 
     def connection
@@ -187,7 +216,7 @@ module SpreeFishbowl
 
     def execute_request(request_name, params = {}, order_id = nil)
       fishbowl = connection
-      return nil if !connected?
+      raise ConnectionNotEstablished if !connected?
 
       failure_count = 0
 
@@ -196,16 +225,16 @@ module SpreeFishbowl
         fishbowl.send(request_name, params)
       rescue Fishbowl::Errors::ServerError => e
         Rails.logger.debug e
-        # Attempt call up to three times
+        # Attempt call up to max_retries times
         unless ((failure_count += 1) <= @max_retries && reconnect)
           log_error e
-          return nil
+          raise e
         end
         retry
       rescue Fishbowl::Errors::StatusError => e
         # Nothing special at the moment
         log_error e
-        return nil
+        raise e
       ensure
         @last_request = fishbowl.last_request
         @last_response = fishbowl.last_response
