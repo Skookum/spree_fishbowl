@@ -1,0 +1,2 @@
+<!-- insert_top '.form-actions' -->
+<%= button_link_to('Sync From Fishbowl', fishbowl_admin_order_shipments_url(@order, { :e => 'sync' }), :icon => 'icon-download-alt') if SpreeFishbowl.enabled? %>

@@ -17,5 +17,52 @@ module Spree
         !SpreeFishbowl.enabled? || fishbowl_sales_order_created?
       )
     end
+
+    def reset_fishbowl_sales_order
+      fishbowl_id = so_number = nil
+    end
+
+    def create_fishbowl_sales_order
+      fb = SpreeFishbowl.client_from_config
+
+      sales_order = fb.create_sales_order!(self)
+
+      self.fishbowl_id = sales_order.db_id
+      self.so_number = sales_order.number
+
+      sales_order
+    end
+
+    def sync_fishbowl_shipments
+      fb = SpreeFishbowl.client_from_config
+
+      fishbowl_shipments = fb.get_order_shipments!(self)
+      if fishbowl_shipments.blank?
+        return false
+      end
+
+      if shipments.blank?
+        return false
+      end
+
+      if fishbowl_shipments.length > 1
+        raise 'Multiple shipments found; update shipment records manually'
+      end
+
+      fishbowl_shipment = fishbowl_shipments.first
+      cartons = fishbowl_shipment.cartons || []
+
+      # Currently setting each Spree shipment to the details
+      # of the first and only shipment and carton until we support
+      # multiple shipments / cartons per order
+      shipments.each do |shipment|
+        shipment.fishbowl_id = fishbowl_shipment.db_id
+        shipment.tracking = cartons.first.tracking_num if cartons.length > 0
+        shipment.ship!
+        shipment.save
+      end
+
+      true
+    end
   end
 end
