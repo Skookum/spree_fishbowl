@@ -231,7 +231,7 @@ module SpreeFishbowl
         @last_error = nil
 
         fb = connection
-        fb.login! if !logged_in?
+        login! if !logged_in?
 
         fb.send(request_name, params)
       rescue Fishbowl::Errors::ServerError => e
