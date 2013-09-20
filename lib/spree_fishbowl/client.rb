@@ -65,14 +65,12 @@ module SpreeFishbowl
     end
 
     def connect!
-      return false if !configured?
+      raise 'No Fishbowl configuration specified' if !configured?
 
-      if @fishbowl
-        @fishbowl.connect.login(user, password) if !@fishbowl.connected?
-      else
-        @fishbowl = Fishbowl::Connection.new(:host => hostname, :port => port).
-                      connect.login(user, password)
-      end
+      (
+        @fishbowl ||=
+        Fishbowl::Connection.new(:host => hostname, :port => port)
+      ).connect unless connected?
 
       connected?
     end
@@ -96,6 +94,15 @@ module SpreeFishbowl
 
     def reconnect
       reconnect! rescue false
+    end
+
+    def login!
+      connect! || raise Fishbowl::Errors::ConnectionNotEstablished
+      @fishbowl.login(username, password).has_ticket?
+    end
+
+    def login
+      login! rescue false
     end
 
     def customer!(name)
@@ -214,19 +221,19 @@ module SpreeFishbowl
   private
 
     def connection
-      connect if !connected?
-      @fishbowl
+      connect! && @fishbowl
     end
 
     def execute_request(request_name, params = {}, order_id = nil)
-      fishbowl = connection
-      raise Fishbowl::Errors::ConnectionNotEstablished if !connected?
-
       failure_count = 0
 
       begin
         @last_error = nil
-        fishbowl.send(request_name, params)
+
+        fb = connection
+        fb.login! if !logged_in?
+
+        fb.send(request_name, params)
       rescue Fishbowl::Errors::ServerError => e
         Rails.logger.debug e
         # Attempt call up to max_retries times
@@ -240,9 +247,9 @@ module SpreeFishbowl
         log_error e
         raise e
       ensure
-        @last_request = fishbowl.last_request
-        @last_response = fishbowl.last_response
-        fishbowl.close if @auto_close
+        @last_request = fb.last_request
+        @last_response = fb.last_response
+        fb.close if @auto_close
       end
     end
 
