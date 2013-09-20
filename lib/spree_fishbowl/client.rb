@@ -103,7 +103,7 @@ module SpreeFishbowl
     end
 
     def customer(name)
-      customer! rescue nil
+      customer!(name) rescue nil
     end
 
     def carriers!
@@ -177,7 +177,7 @@ module SpreeFishbowl
     end
 
     def create_customer(order)
-      create_customer! rescue nil
+      create_customer!(order) rescue nil
     end
 
     def create_sales_order!(order, issue = true)
