@@ -52,6 +52,10 @@ module SpreeFishbowl
       !!@fishbowl && @fishbowl.connected?
     end
 
+    def logged_in?
+      !!@fishbowl && @fishbowl.has_ticket?
+    end
+
     def error?
       !!@last_error
     end
