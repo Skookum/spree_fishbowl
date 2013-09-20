@@ -216,7 +216,7 @@ module SpreeFishbowl
 
     def execute_request(request_name, params = {}, order_id = nil)
       fishbowl = connection
-      raise ConnectionNotEstablished if !connected?
+      raise Fishbowl::Errors::ConnectionNotEstablished if !connected?
 
       failure_count = 0
 
