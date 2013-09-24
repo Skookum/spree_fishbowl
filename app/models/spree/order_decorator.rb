@@ -36,6 +36,10 @@ module Spree
     def sync_fishbowl_shipments
       fb = SpreeFishbowl.client_from_config
 
+      shipments.pending.each do |shipment|
+        shipment.ready if shipment.can_ready?
+      end
+
       fishbowl_shipments = fb.get_order_shipments!(self)
       if fishbowl_shipments.blank?
         return false
