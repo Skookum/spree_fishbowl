@@ -1,3 +1,0 @@
-<!-- insert_bottom "[data-hook=admin_products_index_row_actions]" -->
-&nbsp;
-<%= link_to_with_icon('icon-refresh', 'Refresh', fishbowl_admin_product_url(product, { :e => 'sync' }), :no_text => true, :class => 'edit') if (SpreeFishbowl.enabled? && !product.has_variants?) %>
