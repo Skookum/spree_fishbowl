@@ -15,19 +15,20 @@ module Spree
       )
 
       if Spree::Config[:track_inventory_levels] && !self.on_demand
-        available = SpreeFishbowl.client_from_config.available_inventory(self)
-        if available.nil?
-          orig_on_hand
-        else
-          # don't trigger callbacks, because there's an after_save
-          # hook that will attempt to fetch on_hand ... vicious
-          # cycle
-          update_column(:count_on_hand, available)
-          available
-        end
+        available = update_inventory_from_fishbowl
+        available.nil? ? orig_on_hand : available
       else
         (1.0 / 0) # Infinity
       end
+    end
+
+    def update_inventory_from_fishbowl
+      available = SpreeFishbowl.client_from_config.available_inventory(self)
+      # don't trigger callbacks, because there's an after_save
+      # hook that will attempt to fetch on_hand ... vicious
+      # cycle
+      update_column(:count_on_hand, available) unless available.nil?
+      available
     end
 
   end
