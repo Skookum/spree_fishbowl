@@ -16,6 +16,20 @@ Spree::Core::Engine.routes.draw do
         end
       end
     end
+
+    resources :products do
+      member do
+        put :fishbowl
+        get :fishbowl
+      end
+
+      resources :variants do
+        member do
+          put :fishbowl
+          get :fishbowl
+        end
+      end
+    end
   end
 
 end
