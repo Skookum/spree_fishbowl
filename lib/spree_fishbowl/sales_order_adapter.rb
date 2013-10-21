@@ -96,10 +96,15 @@ module SpreeFishbowl
     end
 
     def self.taxes(order)
+      zone = order.tax_zone
+      # NOTE: uses the first tax rate, since Fishbowl doesn't seem to support
+      # multiple tax rates per-order
+      tax_rate = (zone && zone.tax_rates.first) || nil
+
       {
         :total_tax => order.tax_total,
-        :tax_rate_percentage => nil,
-        :tax_rate_name => nil
+        :tax_rate_percentage => tax_rate.try(:amount),
+        :tax_rate_name => tax_rate.try(:name)
       }
     end
 
