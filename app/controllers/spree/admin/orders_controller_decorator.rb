@@ -32,7 +32,11 @@ private
       return false
     end
 
-    @order.update_from_fishbowl
+    if !@order.update_from_fishbowl
+      flash[:error] = 'Sales order not found in Fishbowl'
+      return false
+    end
+
     @order.save
   end
 end
