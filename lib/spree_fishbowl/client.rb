@@ -202,6 +202,10 @@ module SpreeFishbowl
       create_sales_order!(*args) rescue nil
     end
 
+    def sales_order(so_number)
+      execute_request(:get_sales_order_list, { :so_num => so_number }).first
+    end
+
     def get_order_shipments!(order)
       ship_results = execute_request(:get_ship_list, {
         :order_number => order.so_number,
