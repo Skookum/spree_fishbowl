@@ -4,6 +4,8 @@ Spree::Admin::OrdersController.class_eval do
     case e
     when 'create'
       create_fishbowl_sales_order(params[:force].present?)
+    when 'fetch'
+      fetch_fishbowl_sales_order
     end
   rescue => e
     flash[:error] = "#{e.message}"
@@ -24,4 +26,13 @@ private
     end
   end
 
+  def fetch_fishbowl_sales_order
+    if @order.fishbowl_sales_order_created?
+      flash[:error] = 'The specified order already has a Fishbowl ID'
+      return false
+    end
+
+    @order.update_from_fishbowl
+    @order.save
+  end
 end

@@ -26,11 +26,28 @@ module Spree
       fb = SpreeFishbowl.client_from_config
 
       sales_order = fb.create_sales_order!(self)
+      update_from_sales_order(sales_order)
+      sales_order
+    end
 
+    def update_from_fishbowl
+      fb = SpreeFishbowl.client_from_config
+
+      so_number = SpreeFishbowl::SalesOrderAdapter.so_number(self)
+
+      sales_order = fb.load_sales_order(:number => so_number)
+      if sales_order
+        update_from_sales_order(sales_order)
+      else
+        return false
+      end
+
+      return true
+    end
+
+    def update_from_sales_order(sales_order)
       self.fishbowl_id = sales_order.db_id
       self.so_number = sales_order.number
-
-      sales_order
     end
 
     def sync_fishbowl_shipments
