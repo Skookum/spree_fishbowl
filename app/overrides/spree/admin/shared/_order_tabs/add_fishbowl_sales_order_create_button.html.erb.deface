@@ -1,7 +1,7 @@
 <!-- insert_bottom "#order_tab_summary dl.additional-info" -->
 <% if SpreeFishbowl.enabled? && @order.completed? %>
   <% if !@order.fishbowl_sales_order_created? %>
-  <%= button_link_to 'Create Sales Order', fishbowl_admin_order_url(@order.number, { :e => 'create' }), :icon => 'icon-upload-alt' %>
+  <%= button_link_to 'Create Sales Order', fishbowl_admin_order_url(@order.number, { :e => 'create' }), :icon => 'icon-upload-alt' %><br/>
   <%= button_link_to 'Fetch Fishbowl Info', fishbowl_admin_order_url(@order.number, { :e => 'fetch' }), :icon => 'icon-download-alt' %>
   <% else %>
   <%= button_link_to 'Recreate Sales Order', fishbowl_admin_order_url(@order.number, { :e => 'create', :force => 1 }), :icon => 'icon-refresh', :data => { :confirm => t(:are_you_sure) }  %>
