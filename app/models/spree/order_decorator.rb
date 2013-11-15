@@ -35,7 +35,8 @@ module Spree
 
       so_number = SpreeFishbowl::SalesOrderAdapter.so_number(self)
 
-      sales_order = fb.load_sales_order(:number => so_number)
+      sales_order = fb.sales_order(so_number)
+
       if sales_order
         update_from_sales_order(sales_order)
       else
