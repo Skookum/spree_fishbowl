@@ -19,7 +19,8 @@ module Spree
     end
 
     def reset_fishbowl_sales_order
-      fishbowl_id = so_number = nil
+      self.fishbowl_id = nil
+      self.so_number = nil
     end
 
     def create_fishbowl_sales_order
