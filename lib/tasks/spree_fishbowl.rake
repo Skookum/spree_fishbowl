@@ -123,7 +123,7 @@ namespace :spree_fishbowl do
     fishbowl = SpreeFishbowl.client_from_config
     # This is inefficient, but constructing this in a single
     # Arel query will take a bit of time
-    Spree::Variant.all.reject do |variant|
+    Spree::Variant.active.reject do |variant|
       variant.sku.blank? || (
         variant.is_master? && variant.product.has_variants?
       )
