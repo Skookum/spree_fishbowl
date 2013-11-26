@@ -142,8 +142,8 @@ namespace :spree_fishbowl do
   def rescue_errors(fmt = 'ERROR: %s')
     yield if block_given?
   rescue Fishbowl::Errors::ServerError, Fishbowl::Errors::StatusError => e
-    puts fmt.printf("(from Fishbowl) #{e}")
+    puts fmt % ["(from Fishbowl) #{e}"]
   rescue => e
-    puts fmt.printf(e)
+    puts fmt % [e]
   end
 end
