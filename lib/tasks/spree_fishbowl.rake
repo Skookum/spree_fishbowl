@@ -128,7 +128,7 @@ namespace :spree_fishbowl do
         variant.is_master? && variant.product.has_variants?
       )
     end.each do |variant|
-      rescue_errors do
+      rescue_errors("*** could not fetch / update inventory for #{variant.sku}: %s ***") do
         inventory = fishbowl.available_inventory!(variant)
         unless inventory.nil? || (variant.orig_on_hand === inventory)
           puts "Setting on-hand count to #{inventory} for #{variant.sku} (was #{variant.orig_on_hand})"
